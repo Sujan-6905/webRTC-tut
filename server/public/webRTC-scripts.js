@@ -188,7 +188,6 @@ const addAnswer = async (answer) => {
 }
 
 const disconnect = () => {
-    closeConnections();
     socket.emit('stop', roomId);
 }
 
@@ -197,6 +196,13 @@ const closeConnections = () => {
         peerConnection.close();
         peerConnection = null;
     }
+
+    receivedOffer = null;
+    connectedUsers = null;
+    roomId = null;
+    myId = null;
+    RemotePeerOffer = null;
+    didIoffer = null;
 
     localStream.getTracks().forEach(track => track.stop());
     localStream = null;
