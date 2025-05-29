@@ -11,6 +11,7 @@ let roomId = null;
 let myId = null;
 let RemotePeerOffer = null;
 let didIoffer = null;
+let callLive = false;
 
 const socket = io();
 
@@ -99,6 +100,12 @@ const createConnection = async () => {
 
 const makeCall = async () => {
     try {
+        if(callLive) {
+            disconnect(); // just to make sure that the previous connections are closed
+        }
+        roomdetailsElement.innerText = "";
+        messageElement.innerText = "";
+
         didIoffer = true;
         await fetchUserMedia();
 
@@ -113,6 +120,7 @@ const makeCall = async () => {
         console.log(roomId);
 
         roomdetailsElement.innerText = "room id: " + roomId;
+        callLive = true;
 
         socket.emit('offer', {roomId: roomId, offer: offer});
     }
@@ -123,6 +131,9 @@ const makeCall = async () => {
 
 const answerCall = async () => {
     try {
+        if(callLive) {
+            disconnect(); // just to make sure that the previous connections are closed
+        }
         roomId = document.getElementById('roomId').value;
 
         if(!roomId) {
@@ -141,6 +152,8 @@ const answerCall = async () => {
 
         document.getElementById('roomId').value = "";
         messageElement.innerText = "";
+
+        callLive = true;
 
         console.log(connectedUsers);
 
@@ -203,8 +216,13 @@ const closeConnections = () => {
     myId = null;
     RemotePeerOffer = null;
     didIoffer = null;
+    callLive = false;
+    messageElement.innerText = "";
+    roomdetailsElement.innerText = "";
 
-    localStream.getTracks().forEach(track => track.stop());
+    if(localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+    }
     localStream = null;
     remoteStream = null;
     localVideo.srcObject = null;

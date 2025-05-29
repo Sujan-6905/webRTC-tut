@@ -68,9 +68,15 @@ io.on('connect', (socket) => {
     });
 
     socket.on('stop', (roomId) => {
-        io.to(Rooms[roomId].senderId).emit('stop');
-        io.to(Rooms[roomId].receiverId).emit('stop');
-        delete Rooms[roomId];
+        if(roomId && Rooms[roomId] && Rooms[roomId].senderId) {
+            io.to(Rooms[roomId].senderId).emit('stop');
+        }
+        if(roomId && Rooms[roomId] && Rooms[roomId].receiverId) {
+            io.to(Rooms[roomId].receiverId).emit('stop');
+        }
+        if(roomId && Rooms[roomId]) {
+            delete Rooms[roomId];
+        }
     });
 
     socket.on('get-room', (roomId, callback) => {
