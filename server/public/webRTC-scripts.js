@@ -10,6 +10,7 @@ let connectedUsers = null;
 let roomId = null;
 let myId = null;
 let RemotePeerOffer = null;
+let didIoffer = null;
 
 const socket = io();
 
@@ -45,14 +46,6 @@ socket.on('message', (message) => {
     }
 });
 
-const sendTracks = () => {
-    localStream.getTracks().forEach(track => {
-        console.log("adding track", track);
-        console.log("tracks added to peer connection from local");
-        peerConnection.addTrack(track, localStream);
-    });
-}
-
 const fetchUserMedia = async () => {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true})
@@ -71,10 +64,22 @@ const createConnection = async () => {
         remoteStream = new MediaStream();
         remoteVideo.srcObject = remoteStream;
 
+        localStream.getTracks().forEach(track => {
+            console.log("adding track", track);
+            console.log("tracks added to peer connection from local");
+            peerConnection.addTrack(track, localStream);
+        });
+
         peerConnection.addEventListener('icecandidate', (event) => {
             if (event.candidate) {
                 console.log("ice candidate generated");
-                socket.emit('ice-candidate', {roomId: roomId, candidate: event.candidate, whoSent: 'sender'});
+                if(didIoffer === null) {
+                    didIoffer = false;
+                    socket.emit('ice-candidate', {roomId: roomId, candidate: event.candidate, whoSent: 'receiver'});
+                }
+                else {
+                    socket.emit('ice-candidate', {roomId: roomId, candidate: event.candidate, whoSent: 'sender'});
+                }
             }
         });
 
@@ -94,6 +99,7 @@ const createConnection = async () => {
 
 const makeCall = async () => {
     try {
+        didIoffer = true;
         await fetchUserMedia();
 
         await createConnection();
@@ -155,7 +161,6 @@ const answerCall = async () => {
         await peerConnection.setLocalDescription(answer);
 
         socket.emit('answer', {roomId: roomId, answer: answer});
-        socket.emit('initiate-track-transfer', roomId); // i think we should re-negotiate the offer to transfer tracks
     }
     catch (error) {
         console.log("Error answering call:", error);
@@ -219,9 +224,4 @@ socket.on('ice-candidate', (candidate) => {
 socket.on('stop', () => {
     closeConnections();
     console.log("call disconnected");
-});
-
-socket.on('transfer tracks', () => {
-    console.log("transferring tracks");
-    sendTracks();
 });

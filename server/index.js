@@ -82,11 +82,6 @@ io.on('connect', (socket) => {
         socket.send(JSON.stringify(sendData));
         callback({"status": "ok"});
     })
-    
-    socket.on('initiate-track-transfer', (roomId) => {
-        io.to(Rooms[roomId].senderId).emit('transfer tracks');
-        io.to(Rooms[roomId].receiverId).emit('transfer tracks');
-    })
 
     socket.on('get-sender-offer', (roomId, callback) => {
         const sendData = {
