@@ -123,7 +123,7 @@ io.on('connect', (socket) => {
     })
 });
 
-const PORT = 3000;
+const PORT = 5000;
 
 server.listen(PORT, () => {
     console.log(`server is running on https://localhost:${PORT}`);
